@@ -2,7 +2,9 @@
 
 ## Goal
 
-Build an internal family pharmacy tracking app on Nuxt, Cloudflare Workers, Cloudflare D1, and Google Maps.
+Build **StockMap**, an internal family pharmacy tracking app on Nuxt, Cloudflare Workers, Cloudflare D1, and Google Maps.
+
+The intended production URL is `https://apteki.nerfthis.xyz`.
 
 The MVP should let users:
 
@@ -30,6 +32,7 @@ Tasks:
 - Add Vitest or the project’s default Nuxt-compatible test setup.
 - Add a minimal home page.
 - Add a minimal health endpoint.
+- Configure local dev to run on port `6277` and bind to the LAN, so it is reachable at `http://<machine-ip>:6277`.
 - Add `.env.example` with required variables.
 
 Required env vars:
@@ -45,6 +48,7 @@ DEFAULT_MAP_ZOOM=13
 Acceptance criteria:
 
 - App runs locally.
+- App is reachable from other machines on the LAN at `http://<machine-ip>:6277` during development.
 - App can be deployed to Cloudflare Workers.
 - Tailwind classes work.
 - Reka UI components can be imported.
@@ -294,10 +298,14 @@ Prepare for real use behind Cloudflare Access.
 
 Tasks:
 
+- Use Wrangler CLI as the deployment and D1 operations tool.
+- Add or finalize `wrangler.jsonc` for the `StockMap` Worker.
+- Configure the production route/custom domain for `https://apteki.nerfthis.xyz`.
 - Document Cloudflare Access setup.
 - Document required Google Cloud API/key restrictions.
 - Document D1 migration commands.
 - Document local dev setup.
+- Document Wrangler commands for deploy, D1 migrations, secrets, and logs.
 - Confirm production env vars/secrets.
 - Confirm browser Maps key is restricted by HTTP referrer.
 - Confirm server key is stored as a Cloudflare secret.
@@ -305,9 +313,9 @@ Tasks:
 Acceptance criteria:
 
 - README has exact local setup steps.
-- README has exact deploy steps.
+- README has exact Wrangler-based deploy steps.
 - README explains required Cloudflare Access policy.
-- App works behind Cloudflare Access.
+- App works behind Cloudflare Access at `https://apteki.nerfthis.xyz`.
 
 ## Later Enhancements
 
@@ -362,5 +370,4 @@ Only add if the actual workflow needs it.
 6. Render tracked pharmacy markers.
 7. Details drawer actions.
 8. Google Places add flow.
-9. Polish/deployment docs.
-
+9. Polish/Wrangler deployment docs.

@@ -2,7 +2,9 @@
 
 ## Project Summary
 
-Build a small internal family web app for tracking local pharmacies on a Google Maps map.
+Build **StockMap**, a small internal family web app for tracking local pharmacies on a Google Maps map.
+
+The intended production URL is `https://apteki.nerfthis.xyz`.
 
 The app is protected externally by Cloudflare Access. It has no application-level authentication, no user accounts, and no roles.
 
@@ -41,6 +43,18 @@ The app must deploy to Cloudflare Workers.
 Use Cloudflare D1 for persistence.
 
 Cloudflare Access will protect the app at the edge. Do not add username/password login, sessions, OAuth, or application-level auth in the MVP.
+
+Use Wrangler CLI for Cloudflare deployment and D1 operations once the MVP is ready to deploy. Prefer a checked-in `wrangler.jsonc` config and document final commands such as `wrangler deploy`, D1 migration application, and secret setup in the README near the end of the MVP.
+
+The production route/custom domain should target `https://apteki.nerfthis.xyz`.
+
+## Local Development
+
+The development server should listen on port `6277` (`MAPS` on a T9 keypad).
+
+The dev server should bind to the LAN, not only localhost, so it is reachable from other devices on the same network at `http://<machine-ip>:6277`.
+
+Use the project’s Nuxt/Wrangler-compatible dev command to enforce this host/port once the scaffold exists.
 
 ## Configuration
 
@@ -371,4 +385,3 @@ Keep database access close to server routes or in a small server-side module.
 Use strong TypeScript types for pharmacy data and API responses.
 
 Use clear naming around the internal stocked/not-stocked concept.
-
