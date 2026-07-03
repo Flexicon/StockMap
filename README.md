@@ -6,6 +6,8 @@ The intended production URL is `https://apteki.nerfthis.xyz`. Cloudflare Access 
 
 ## Local Development
 
+Use Node.js `24.18.0`. The version is pinned in `mise.toml` for local development and `.node-version` for Cloudflare builds.
+
 Install dependencies:
 
 ```bash
@@ -55,7 +57,7 @@ Create the database once:
 npx wrangler d1 create stockmap
 ```
 
-Copy the returned `database_id` into `wrangler.jsonc` and `nuxt.config.ts` where `replace-with-d1-database-id` appears.
+Copy the returned `database_id` into `wrangler.toml`.
 
 Apply migrations locally:
 
@@ -78,7 +80,7 @@ npm run build
 
 ## Cloudflare Workers
 
-Cloudflare Worker settings live in `wrangler.jsonc` and are mirrored in `nuxt.config.ts` for Nitro generation.
+Cloudflare Worker settings live in `wrangler.toml`.
 
 Preview the built Worker locally:
 
