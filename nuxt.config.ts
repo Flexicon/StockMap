@@ -3,7 +3,10 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   app: {
     head: {
-      title: 'StockMap',
+      title: 'Apteki',
+      link: [
+        { rel: 'icon', href: 'https://fav.farm/%F0%9F%92%8A' },
+      ],
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
