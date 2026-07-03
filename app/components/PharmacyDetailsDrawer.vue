@@ -58,39 +58,64 @@
       </button>
     </div>
 
-    <div class="mt-4 flex items-center justify-between gap-3 border-t border-[var(--color-border)] pt-4">
-      <p class="text-sm font-semibold text-[var(--color-ink-muted)]">
-        {{ pharmacy.lastVisitedOn || 'No visit' }}
-      </p>
-      <AlertDialogRoot>
-        <AlertDialogTrigger
-          class="rounded-full px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50 disabled:opacity-60"
-          type="button"
-          :disabled="busy"
-        >
-          Delete
-        </AlertDialogTrigger>
+    <div class="mt-4 border-t border-[var(--color-border)] pt-4">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wide text-[var(--color-ink-muted)]">
+            Visits
+          </p>
+          <ol
+            v-if="pharmacy.recentVisits.length"
+            class="mt-2 space-y-1.5"
+          >
+            <li
+              v-for="visit in pharmacy.recentVisits"
+              :key="visit.id"
+              class="flex items-center gap-2 text-sm font-semibold text-[var(--color-ink)]"
+            >
+              <span class="h-2 w-2 rounded-full bg-[var(--color-brand-primary)]" />
+              <span>{{ visit.visitedOn }}</span>
+              <span class="text-[var(--color-ink-muted)]">{{ relativeVisitAge(visit.visitedOn) }}</span>
+            </li>
+          </ol>
+          <p
+            v-else
+            class="mt-2 text-sm font-semibold text-[var(--color-ink-muted)]"
+          >
+            No visits
+          </p>
+        </div>
 
-        <AlertDialogPortal>
-          <AlertDialogOverlay class="fixed inset-0 z-40 bg-teal-950/20 backdrop-blur-sm" />
-          <AlertDialogContent class="fixed left-1/2 top-1/2 z-50 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-2xl">
-            <AlertDialogTitle class="text-lg font-bold text-[var(--color-ink)]">
-              Delete?
-            </AlertDialogTitle>
-            <div class="mt-4 flex justify-end gap-2">
-              <AlertDialogCancel class="rounded-full bg-[var(--color-surface-muted)] px-4 py-2 text-sm font-bold text-[var(--color-ink)]">
-                No
-              </AlertDialogCancel>
-              <AlertDialogAction
-                class="rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white"
-                @click="deleteNow"
-              >
-                Yes
-              </AlertDialogAction>
-            </div>
-          </AlertDialogContent>
-        </AlertDialogPortal>
-      </AlertDialogRoot>
+        <AlertDialogRoot>
+          <AlertDialogTrigger
+            class="rounded-full px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50 disabled:opacity-60"
+            type="button"
+            :disabled="busy"
+          >
+            Delete
+          </AlertDialogTrigger>
+
+          <AlertDialogPortal>
+            <AlertDialogOverlay class="fixed inset-0 z-40 bg-teal-950/20 backdrop-blur-sm" />
+            <AlertDialogContent class="fixed left-1/2 top-1/2 z-50 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-2xl">
+              <AlertDialogTitle class="text-lg font-bold text-[var(--color-ink)]">
+                Delete?
+              </AlertDialogTitle>
+              <div class="mt-4 flex justify-end gap-2">
+                <AlertDialogCancel class="rounded-full bg-[var(--color-surface-muted)] px-4 py-2 text-sm font-bold text-[var(--color-ink)]">
+                  No
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  class="rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white"
+                  @click="deleteNow"
+                >
+                  Yes
+                </AlertDialogAction>
+              </div>
+            </AlertDialogContent>
+          </AlertDialogPortal>
+        </AlertDialogRoot>
+      </div>
     </div>
   </aside>
 </template>

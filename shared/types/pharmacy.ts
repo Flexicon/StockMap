@@ -11,6 +11,13 @@ export interface Pharmacy {
   googlePlaceIdRefreshedAt: string | null
   createdAt: string
   updatedAt: string
+  recentVisits: PharmacyVisit[]
+}
+
+export interface PharmacyVisit {
+  id: string
+  visitedOn: string
+  createdAt: string
 }
 
 export interface PharmacyInput {

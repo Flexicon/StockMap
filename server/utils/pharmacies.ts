@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { Pharmacy, PharmacyEventType } from '~~/shared/types/pharmacy'
+import type { Pharmacy, PharmacyEventType, PharmacyVisit } from '~~/shared/types/pharmacy'
 import { localDateString } from '~~/shared/utils/date'
 import type { D1DatabaseBinding } from './d1'
 
@@ -17,6 +17,15 @@ interface PharmacyRow {
   created_at: string
   updated_at: string
 }
+
+interface PharmacyVisitRow {
+  id: string
+  pharmacy_id: string
+  event_date: string
+  created_at: string
+}
+
+const RECENT_VISITS_LIMIT = 5
 
 export const createPharmacySchema = z.object({
   googlePlaceId: z.string().min(1),
@@ -48,6 +57,7 @@ export function mapPharmacy(row: PharmacyRow): Pharmacy {
     googlePlaceIdRefreshedAt: row.google_place_id_refreshed_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    recentVisits: [],
   }
 }
 
@@ -58,13 +68,57 @@ export async function listPharmacies(db: D1DatabaseBinding): Promise<Pharmacy[]>
     ORDER BY cached_name COLLATE NOCASE, created_at DESC
   `).all<PharmacyRow>()
 
-  return (result.results ?? []).map(mapPharmacy)
+  const pharmacies = (result.results ?? []).map(mapPharmacy)
+  if (pharmacies.length === 0) return pharmacies
+
+  return withRecentVisits(db, pharmacies)
 }
 
 export async function getPharmacyById(db: D1DatabaseBinding, id: string): Promise<Pharmacy | null> {
   const row = await db.prepare('SELECT * FROM pharmacies WHERE id = ?').bind(id).first<PharmacyRow>()
 
-  return row ? mapPharmacy(row) : null
+  if (!row) return null
+
+  const [pharmacy] = await withRecentVisits(db, [mapPharmacy(row)])
+
+  return pharmacy ?? null
+}
+
+async function withRecentVisits(db: D1DatabaseBinding, pharmacies: Pharmacy[]): Promise<Pharmacy[]> {
+  const ids = pharmacies.map(pharmacy => pharmacy.id)
+  const placeholders = ids.map(() => '?').join(', ')
+  const result = await db.prepare(`
+    SELECT id, pharmacy_id, event_date, created_at
+    FROM (
+      SELECT
+        id,
+        pharmacy_id,
+        event_date,
+        created_at,
+        ROW_NUMBER() OVER (PARTITION BY pharmacy_id ORDER BY event_date DESC, created_at DESC) AS visit_rank
+      FROM pharmacy_events
+      WHERE event_type = 'visited'
+        AND pharmacy_id IN (${placeholders})
+    )
+    WHERE visit_rank <= ?
+    ORDER BY pharmacy_id, event_date DESC, created_at DESC
+  `).bind(...ids, RECENT_VISITS_LIMIT).all<PharmacyVisitRow>()
+
+  const visitsByPharmacy = new Map<string, PharmacyVisit[]>()
+  for (const row of result.results ?? []) {
+    const visits = visitsByPharmacy.get(row.pharmacy_id) ?? []
+    visits.push({
+      id: row.id,
+      visitedOn: row.event_date,
+      createdAt: row.created_at,
+    })
+    visitsByPharmacy.set(row.pharmacy_id, visits)
+  }
+
+  return pharmacies.map(pharmacy => ({
+    ...pharmacy,
+    recentVisits: visitsByPharmacy.get(pharmacy.id) ?? [],
+  }))
 }
 
 export async function createPharmacy(db: D1DatabaseBinding, input: CreatePharmacyInput): Promise<Pharmacy> {

@@ -54,7 +54,16 @@ export function usePharmacies() {
     const today = localDateString()
     mutatingId.value = pharmacy.id
     error.value = null
-    pharmacies.value = pharmacies.value.map(item => item.id === pharmacy.id ? { ...item, lastVisitedOn: today } : item)
+    pharmacies.value = pharmacies.value.map(item => item.id === pharmacy.id
+      ? {
+          ...item,
+          lastVisitedOn: today,
+          recentVisits: [
+            { id: `pending-${today}`, visitedOn: today, createdAt: new Date().toISOString() },
+            ...item.recentVisits,
+          ].slice(0, 5),
+        }
+      : item)
 
     try {
       const response = await $fetch<PharmacyResponse>(`/api/pharmacies/${pharmacy.id}/visit-today`, { method: 'POST' })
