@@ -12,12 +12,12 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/tailwind.css'],
   runtimeConfig: {
-    googleMapsServerKey: '',
+    googleMapsServerKey: process.env.GOOGLE_MAPS_SERVER_KEY || '',
     public: {
-      googleMapsBrowserKey: '',
-      defaultMapLat: '',
-      defaultMapLng: '',
-      defaultMapZoom: 13,
+      googleMapsBrowserKey: process.env.NUXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY || '',
+      defaultMapLat: process.env.DEFAULT_MAP_LAT || '',
+      defaultMapLng: process.env.DEFAULT_MAP_LNG || '',
+      defaultMapZoom: Number(process.env.DEFAULT_MAP_ZOOM || 13),
     },
   },
   devServer: {
@@ -33,6 +33,15 @@ export default defineNuxtConfig({
       wrangler: {
         name: 'stockmap',
         workers_dev: false,
+        compatibility_flags: ['nodejs_compat'],
+        d1_databases: [
+          {
+            binding: 'DB',
+            database_name: 'stockmap',
+            database_id: 'replace-with-d1-database-id',
+            migrations_dir: './migrations',
+          },
+        ],
         routes: [
           {
             pattern: 'apteki.nerfthis.xyz',
@@ -51,6 +60,11 @@ export default defineNuxtConfig({
   },
   typescript: {
     typeCheck: true,
+    tsConfig: {
+      compilerOptions: {
+        types: ['google.maps', 'node'],
+      },
+    },
   },
   eslint: {
     config: {

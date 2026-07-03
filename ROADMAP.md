@@ -18,6 +18,38 @@ The MVP should let users:
 
 The app is protected by Cloudflare Access. Do not add application-level auth.
 
+## Current State
+
+MVP phases 0-9 are implemented in the codebase.
+
+Implemented:
+
+- Nuxt 4, TypeScript, Tailwind CSS, Reka UI, Vitest, ESLint, and Cloudflare Workers build output.
+- Local Nuxt dev binds to `0.0.0.0:6277`.
+- D1 migration `0001_create_pharmacies.sql` creates `pharmacies` and `pharmacy_events` with indexes.
+- Raw SQL D1 helpers are used instead of Drizzle to keep the MVP small.
+- Pharmacy API routes exist for list, create, patch, delete, visit-today, toggle-stocked, and Google Place details lookup.
+- Zod validates API inputs and Google Places responses.
+- Pure marker/date logic lives in `shared/utils` and is covered by Vitest tests.
+- The home screen is now the app: full-screen Google Map, floating Places autocomplete search, markers, and selected-pharmacy drawer.
+- Mark visited, toggle stocked, and delete use optimistic UI updates; failed mutations revert and show a short error.
+- Delete uses a Reka alert dialog confirmation.
+- `wrangler.jsonc` and README document D1, deployment, Cloudflare Access, and Google key setup.
+
+Important UI decisions:
+
+- There is no marketing/landing page inside the app.
+- There is no marker legend in the MVP UI.
+- There is no empty-state paragraph or “Add first” chip.
+- The search control has no decorative plus icon; choosing a Google Places result is the add action.
+
+Pending before real production use:
+
+- Create the actual Cloudflare D1 database and replace `replace-with-d1-database-id` in config.
+- Set real env vars/secrets and Google API key restrictions.
+- Apply D1 migrations locally/remotely with Wrangler.
+- Verify the deployed app behind Cloudflare Access at `https://apteki.nerfthis.xyz`.
+
 Design intent:
 
 - Use as little visible text as possible while keeping the app clear and accessible.
@@ -214,7 +246,7 @@ Tasks:
 - Fetch tracked pharmacies on page load.
 - Render one marker per pharmacy with valid cached lat/lng.
 - Apply marker visual state from `getPharmacyMarkerState`.
-- Add empty state when no pharmacies exist.
+- Keep the no-pharmacies state visually quiet; the search control remains the only add affordance.
 - Refresh markers after API mutations.
 
 Acceptance criteria:
@@ -295,7 +327,7 @@ Tasks:
 - Add optimistic updates for visit/toggle actions.
 - Add small toast/inline errors for failed mutations.
 - Add loading skeletons or simple loading states.
-- Add marker legend.
+- Avoid a marker legend unless family use shows the colors are unclear.
 - Add confirmation before delete.
 - Make map controls usable on iPhone/iPad.
 - Reduce visible text where icons, position, color, or state chips are clearer.

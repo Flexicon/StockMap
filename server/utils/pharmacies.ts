@@ -1,0 +1,191 @@
+import { z } from 'zod'
+import type { Pharmacy, PharmacyEventType } from '~~/shared/types/pharmacy'
+import { localDateString } from '~~/shared/utils/date'
+import type { D1DatabaseBinding } from './d1'
+
+interface PharmacyRow {
+  id: string
+  google_place_id: string
+  is_stocked: number
+  last_visited_on: string | null
+  cached_name: string | null
+  cached_address: string | null
+  cached_lat: number | null
+  cached_lng: number | null
+  google_details_cached_at: string | null
+  google_place_id_refreshed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export const createPharmacySchema = z.object({
+  googlePlaceId: z.string().min(1),
+  cachedName: z.string().trim().min(1).nullable().optional(),
+  cachedAddress: z.string().trim().min(1).nullable().optional(),
+  cachedLat: z.number().finite().min(-90).max(90).nullable().optional(),
+  cachedLng: z.number().finite().min(-180).max(180).nullable().optional(),
+})
+
+export const updatePharmacySchema = z.object({
+  isStocked: z.boolean().optional(),
+  lastVisitedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+}).refine(value => Object.keys(value).length > 0, 'Expected at least one supported field')
+
+export type CreatePharmacyInput = z.infer<typeof createPharmacySchema>
+export type UpdatePharmacyInput = z.infer<typeof updatePharmacySchema>
+
+export function mapPharmacy(row: PharmacyRow): Pharmacy {
+  return {
+    id: row.id,
+    googlePlaceId: row.google_place_id,
+    isStocked: row.is_stocked === 1,
+    lastVisitedOn: row.last_visited_on,
+    cachedName: row.cached_name,
+    cachedAddress: row.cached_address,
+    cachedLat: row.cached_lat,
+    cachedLng: row.cached_lng,
+    googleDetailsCachedAt: row.google_details_cached_at,
+    googlePlaceIdRefreshedAt: row.google_place_id_refreshed_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+export async function listPharmacies(db: D1DatabaseBinding): Promise<Pharmacy[]> {
+  const result = await db.prepare(`
+    SELECT *
+    FROM pharmacies
+    ORDER BY cached_name COLLATE NOCASE, created_at DESC
+  `).all<PharmacyRow>()
+
+  return (result.results ?? []).map(mapPharmacy)
+}
+
+export async function getPharmacyById(db: D1DatabaseBinding, id: string): Promise<Pharmacy | null> {
+  const row = await db.prepare('SELECT * FROM pharmacies WHERE id = ?').bind(id).first<PharmacyRow>()
+
+  return row ? mapPharmacy(row) : null
+}
+
+export async function createPharmacy(db: D1DatabaseBinding, input: CreatePharmacyInput): Promise<Pharmacy> {
+  const id = crypto.randomUUID()
+  const now = new Date().toISOString()
+
+  await db.prepare(`
+    INSERT INTO pharmacies (
+      id,
+      google_place_id,
+      cached_name,
+      cached_address,
+      cached_lat,
+      cached_lng,
+      google_details_cached_at,
+      google_place_id_refreshed_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(
+    id,
+    input.googlePlaceId,
+    nullable(input.cachedName),
+    nullable(input.cachedAddress),
+    nullable(input.cachedLat),
+    nullable(input.cachedLng),
+    now,
+    now,
+    now,
+  ).run()
+
+  const pharmacy = await getPharmacyById(db, id)
+  if (!pharmacy) throw new Error('Created pharmacy was not found')
+
+  return pharmacy
+}
+
+export async function updatePharmacy(db: D1DatabaseBinding, id: string, input: UpdatePharmacyInput): Promise<Pharmacy | null> {
+  const current = await getPharmacyById(db, id)
+  if (!current) return null
+
+  await db.prepare(`
+    UPDATE pharmacies
+    SET is_stocked = ?, last_visited_on = ?, updated_at = ?
+    WHERE id = ?
+  `).bind(
+    stockedFlag(resolveStocked(current, input)),
+    resolveLastVisitedOn(current, input),
+    new Date().toISOString(),
+    id,
+  ).run()
+
+  return getPharmacyById(db, id)
+}
+
+export async function deletePharmacy(db: D1DatabaseBinding, id: string): Promise<boolean> {
+  const existing = await getPharmacyById(db, id)
+  if (!existing) return false
+
+  await db.prepare('DELETE FROM pharmacy_events WHERE pharmacy_id = ?').bind(id).run()
+  await db.prepare('DELETE FROM pharmacies WHERE id = ?').bind(id).run()
+
+  return true
+}
+
+export async function markVisitedToday(db: D1DatabaseBinding, id: string): Promise<Pharmacy | null> {
+  const today = localDateString()
+  const existing = await getPharmacyById(db, id)
+  if (!existing) return null
+
+  await db.batch([
+    db.prepare('UPDATE pharmacies SET last_visited_on = ?, updated_at = ? WHERE id = ?').bind(today, new Date().toISOString(), id),
+    eventStatement(db, id, 'visited', today),
+  ])
+
+  return getPharmacyById(db, id)
+}
+
+export async function toggleStocked(db: D1DatabaseBinding, id: string): Promise<Pharmacy | null> {
+  const existing = await getPharmacyById(db, id)
+  if (!existing) return null
+
+  const nextStocked = !existing.isStocked
+  const today = localDateString()
+
+  await db.batch([
+    db.prepare('UPDATE pharmacies SET is_stocked = ?, updated_at = ? WHERE id = ?').bind(stockedFlag(nextStocked), new Date().toISOString(), id),
+    eventStatement(db, id, stockedEventType(nextStocked), today),
+  ])
+
+  return getPharmacyById(db, id)
+}
+
+function eventStatement(db: D1DatabaseBinding, pharmacyId: string, eventType: PharmacyEventType, eventDate: string) {
+  return db.prepare(`
+    INSERT INTO pharmacy_events (id, pharmacy_id, event_type, event_date)
+    VALUES (?, ?, ?, ?)
+  `).bind(crypto.randomUUID(), pharmacyId, eventType, eventDate)
+}
+
+function nullable<T>(value: T | null | undefined): T | null {
+  if (value === undefined) return null
+
+  return value
+}
+
+function stockedFlag(value: boolean): number {
+  return value ? 1 : 0
+}
+
+function resolveStocked(current: Pharmacy, input: UpdatePharmacyInput): boolean {
+  if (input.isStocked === undefined) return current.isStocked
+
+  return input.isStocked
+}
+
+function resolveLastVisitedOn(current: Pharmacy, input: UpdatePharmacyInput): string | null {
+  if (input.lastVisitedOn === undefined) return current.lastVisitedOn
+
+  return input.lastVisitedOn
+}
+
+function stockedEventType(isStocked: boolean): PharmacyEventType {
+  return isStocked ? 'marked_stocked' : 'marked_not_stocked'
+}

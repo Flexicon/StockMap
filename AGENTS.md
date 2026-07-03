@@ -20,6 +20,33 @@ The app lets family members:
 
 The app tracks only pharmacies explicitly added by the user. It does not automatically import all pharmacies from the current map viewport in the MVP.
 
+## Current Implementation State
+
+The MVP is implemented in this repository.
+
+Implemented:
+
+- Nuxt 4 app deployed as a Cloudflare Worker.
+- Tailwind CSS for styling and Reka UI for the delete confirmation dialog.
+- Raw SQL D1 migration and server helpers for `pharmacies` and `pharmacy_events`.
+- Nuxt server routes for tracked pharmacy CRUD, visit-today, stocked toggle, and Google Place details lookup.
+- Google Maps JavaScript API map shell with approximate Poland bounds.
+- Google Places autocomplete search for adding tracked pharmacies.
+- Marker state/date logic in shared pure functions with Vitest coverage.
+- Full-screen map UI with a floating search control and compact responsive details drawer.
+- Optimistic UI updates for visit, stocked toggle, and delete.
+- Short inline error states.
+- README deployment notes for Wrangler, D1 migrations, Cloudflare Access, and Google key restrictions.
+
+Current UI decisions:
+
+- Do not show a marker legend by default.
+- Do not show verbose empty-state text or an “Add first” chip.
+- Do not use a decorative plus icon in the search field; selecting a Google Places result is the add action.
+- Keep visible copy sparse, but preserve accessible labels for controls.
+
+Before production use, create the real D1 database, replace the placeholder D1 database id in config, set secrets/env vars, apply migrations, and verify the deployed custom domain behind Cloudflare Access.
+
 ## Product Design Direction
 
 Build the UI with as little actual text as possible. The app should feel direct, calm, and obvious, closer to the product sensibility of 37signals apps such as Campfire, Fizzy, Writebook, and Basecamp than a dense enterprise dashboard.
@@ -55,7 +82,7 @@ Use this stack unless there is a strong technical reason not to:
 - Cloudflare D1
 - Google Maps JavaScript API
 - Google Places API / Places Library
-- Drizzle ORM, unless raw SQL is materially simpler for D1 migrations
+- Raw SQL for D1 routes and migrations unless the data access layer grows enough to justify Drizzle later
 
 Do not build this as a generic multi-tenant SaaS app. It is a private internal tool.
 
