@@ -30,32 +30,6 @@ export default defineNuxtConfig({
     cloudflare: {
       deployConfig: true,
       nodeCompat: true,
-      wrangler: {
-        name: 'stockmap',
-        workers_dev: false,
-        compatibility_flags: ['nodejs_compat'],
-        d1_databases: [
-          {
-            binding: 'DB',
-            database_name: 'stockmap',
-            database_id: '47b504fa-02a1-4a87-9a70-4687fcf8658f',
-            migrations_dir: './migrations',
-          },
-        ],
-        routes: [
-          {
-            pattern: 'apteki.nerfthis.xyz',
-            custom_domain: true,
-          },
-        ],
-        dev: {
-          ip: '0.0.0.0',
-          port: 6277,
-        },
-        observability: {
-          enabled: true,
-        },
-      },
     },
   },
   typescript: {
