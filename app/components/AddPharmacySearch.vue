@@ -38,6 +38,7 @@ onMounted(async () => {
     })
     autocomplete.className = 'block h-11 min-w-0 flex-1 text-base font-semibold sm:w-80'
     autocomplete.setAttribute('aria-label', 'Add pharmacy')
+    autocomplete.setAttribute('no-clear-button', '')
     autocomplete.setAttribute('no-input-icon', '')
     formEl.value.append(autocomplete)
     bindAutocompleteToMap()
