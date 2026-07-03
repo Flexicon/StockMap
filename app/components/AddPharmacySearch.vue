@@ -13,7 +13,7 @@
       ref="inputEl"
       class="h-11 min-w-0 flex-1 bg-transparent px-4 text-base font-semibold text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-muted)] sm:w-80"
       autocomplete="off"
-      placeholder="Apteka"
+      placeholder="Dodaj aptekę"
       type="search"
     >
   </form>

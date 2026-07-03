@@ -33,6 +33,17 @@ const POLAND_BOUNDS = {
   east: 24.5,
 }
 
+const MAP_STYLES: google.maps.MapTypeStyle[] = [
+  {
+    featureType: 'poi',
+    stylers: [{ visibility: 'off' }],
+  },
+  {
+    featureType: 'transit.station',
+    stylers: [{ visibility: 'off' }],
+  },
+]
+
 const props = defineProps<{
   pharmacies: Pharmacy[]
   selectedId: string | null
@@ -66,6 +77,7 @@ onMounted(async () => {
         strictBounds: false,
       },
       streetViewControl: false,
+      styles: MAP_STYLES,
       zoom: Number(config.public.defaultMapZoom || 13),
     })
 
