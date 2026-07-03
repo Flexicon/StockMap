@@ -83,7 +83,8 @@ onMounted(async () => {
     emit('ready', map)
     renderMarkers()
   }
-  catch {
+  catch (err) {
+    console.error('Map load failure:', err)
     error.value = 'Map unavailable'
   }
   finally {
