@@ -1,22 +1,10 @@
 <template>
   <form
-    class="flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/95 p-2 shadow-xl shadow-teal-950/10 backdrop-blur"
+    ref="formEl"
+    class="add-pharmacy-search flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/95 p-2 shadow-xl shadow-teal-950/10 backdrop-blur"
     role="search"
     @submit.prevent
-  >
-    <label
-      class="sr-only"
-      for="place-search"
-    >Add pharmacy</label>
-    <input
-      id="place-search"
-      ref="inputEl"
-      class="h-11 min-w-0 flex-1 bg-transparent px-4 text-base font-semibold text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-muted)] sm:w-80"
-      autocomplete="off"
-      placeholder="Dodaj aptekę"
-      type="search"
-    >
-  </form>
+  />
 </template>
 
 <script setup lang="ts">
@@ -34,33 +22,38 @@ const props = defineProps<{
 }>()
 
 const config = useRuntimeConfig()
-const inputEl = ref<HTMLInputElement | null>(null)
-let autocomplete: google.maps.places.Autocomplete | null = null
+const formEl = ref<HTMLFormElement | null>(null)
+let autocomplete: google.maps.places.PlaceAutocompleteElement | null = null
+let mapBoundsListener: google.maps.MapsEventListener | null = null
 
 onMounted(async () => {
   try {
     const maps = await loadGoogleMaps(config.public.googleMapsBrowserKey)
-    if (!inputEl.value) return
+    if (!formEl.value) return
 
-    autocomplete = new maps.maps.places.Autocomplete(inputEl.value, {
-      componentRestrictions: { country: 'pl' },
-      fields: ['place_id', 'name', 'formatted_address', 'geometry'],
-      strictBounds: false,
-      types: ['establishment'],
+    autocomplete = new maps.places.PlaceAutocompleteElement({
+      includedPrimaryTypes: ['pharmacy'],
+      includedRegionCodes: ['pl'],
+      placeholder: 'Dodaj aptekę',
     })
+    autocomplete.className = 'block h-11 min-w-0 flex-1 text-base font-semibold sm:w-80'
+    autocomplete.setAttribute('aria-label', 'Add pharmacy')
+    autocomplete.setAttribute('no-input-icon', '')
+    formEl.value.append(autocomplete)
     bindAutocompleteToMap()
 
-    autocomplete.addListener('place_changed', async () => {
-      const place = autocomplete!.getPlace()
-      if (!place.place_id) return
+    autocomplete.addEventListener('gmp-select', async (event) => {
+      const place = (event as google.maps.places.PlacePredictionSelectEvent).placePrediction.toPlace()
+      await place.fetchFields({ fields: ['id', 'displayName', 'formattedAddress', 'location'] })
+      if (!place.id) return
 
-      const input = await normalizePlace(place.place_id, place)
+      const input = await normalizePlace(place)
       if (!input) return
 
       const pharmacy = await props.createPharmacy(input)
       if (!pharmacy) return
 
-      inputEl.value!.value = ''
+      autocomplete!.value = ''
       emit('created', pharmacy)
     })
   }
@@ -71,20 +64,28 @@ onMounted(async () => {
 
 watch(() => props.map, bindAutocompleteToMap)
 
+onBeforeUnmount(() => {
+  mapBoundsListener?.remove()
+})
+
 function bindAutocompleteToMap() {
   if (!autocomplete || !props.map) return
 
-  autocomplete.bindTo('bounds', props.map)
+  mapBoundsListener?.remove()
+  autocomplete.locationBias = props.map.getBounds() ?? null
+  mapBoundsListener = props.map.addListener('bounds_changed', () => {
+    autocomplete!.locationBias = props.map!.getBounds() ?? null
+  })
 }
 
-async function normalizePlace(placeId: string, place: google.maps.places.PlaceResult): Promise<PharmacyInput | null> {
+async function normalizePlace(place: google.maps.places.Place): Promise<PharmacyInput | null> {
   const location = placeLocation(place)
-  if (!location) return fetchPlaceInput(placeId)
+  if (!location) return fetchPlaceInput(place.id)
 
   return {
-    googlePlaceId: placeId,
-    cachedName: optionalString(place.name),
-    cachedAddress: optionalString(place.formatted_address),
+    googlePlaceId: place.id,
+    cachedName: optionalString(place.displayName ?? undefined),
+    cachedAddress: optionalString(place.formattedAddress ?? undefined),
     cachedLat: location.lat(),
     cachedLng: location.lng(),
   }
@@ -104,10 +105,10 @@ async function fetchPlaceInput(placeId: string): Promise<PharmacyInput | null> {
   }
 }
 
-function placeLocation(place: google.maps.places.PlaceResult): google.maps.LatLng | null {
-  if (!place.geometry?.location) return null
+function placeLocation(place: google.maps.places.Place): google.maps.LatLng | null {
+  if (!place.location) return null
 
-  return place.geometry.location
+  return place.location
 }
 
 function optionalString(value: string | undefined): string | null {
@@ -116,3 +117,62 @@ function optionalString(value: string | undefined): string | null {
   return value
 }
 </script>
+
+<style scoped>
+.add-pharmacy-search :deep(gmp-place-autocomplete) {
+  background-color: transparent;
+  border: 0;
+  border-radius: 9999px;
+  color: var(--color-ink);
+  color-scheme: light;
+  font: inherit;
+}
+
+.add-pharmacy-search :deep(gmp-place-autocomplete::part(input)) {
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 700;
+}
+
+.add-pharmacy-search :deep(gmp-place-autocomplete::part(focus-ring)) {
+  border: 0;
+  box-shadow: none;
+}
+
+.add-pharmacy-search :deep(gmp-place-autocomplete::part(prediction-list)) {
+  margin-top: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 1.5rem;
+  background: var(--color-surface);
+  box-shadow: 0 1.25rem 2.5rem rgb(19 78 74 / 18%);
+}
+
+.add-pharmacy-search :deep(gmp-place-autocomplete::part(prediction-item)) {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.add-pharmacy-search :deep(gmp-place-autocomplete::part(prediction-item):hover) {
+  background: var(--color-brand-mint);
+}
+
+.add-pharmacy-search :deep(gmp-place-autocomplete::part(prediction-item-selected)) {
+  background: var(--color-brand-primary-soft);
+}
+
+.add-pharmacy-search :deep(gmp-place-autocomplete::part(prediction-item-icon)) {
+  color: var(--color-brand-primary-strong);
+}
+
+.add-pharmacy-search :deep(gmp-place-autocomplete::part(prediction-item-main-text)),
+.add-pharmacy-search :deep(gmp-place-autocomplete::part(prediction-item-match)) {
+  color: var(--color-ink);
+  font-weight: 800;
+}
+
+.add-pharmacy-search :deep(gmp-place-autocomplete::part(prediction-item-nonmatch)),
+.add-pharmacy-search :deep(gmp-place-autocomplete::part(prediction-item-secondary-text)) {
+  color: var(--color-ink-muted);
+}
+</style>

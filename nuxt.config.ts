@@ -18,6 +18,7 @@ export default defineNuxtConfig({
     googleMapsServerKey: process.env.GOOGLE_MAPS_SERVER_KEY || '',
     public: {
       googleMapsBrowserKey: process.env.NUXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY || '',
+      googleMapsMapId: process.env.NUXT_PUBLIC_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID',
       defaultMapLat: process.env.DEFAULT_MAP_LAT || '',
       defaultMapLng: process.env.DEFAULT_MAP_LNG || '',
       defaultMapZoom: Number(process.env.DEFAULT_MAP_ZOOM || 13),

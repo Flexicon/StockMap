@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import type { MarkerState, Pharmacy } from '~~/shared/types/pharmacy'
 import { getPharmacyMarkerState } from '~~/shared/utils/marker-state'
-import { loadGoogleMaps } from '../utils/google-maps'
+import { loadGoogleMaps, type GoogleMapsApi } from '../utils/google-maps'
 
 const POLAND_BOUNDS = {
   north: 55.2,
@@ -30,17 +30,6 @@ const POLAND_BOUNDS = {
   west: 14.0,
   east: 24.5,
 }
-
-const MAP_STYLES: google.maps.MapTypeStyle[] = [
-  {
-    featureType: 'poi',
-    stylers: [{ visibility: 'off' }],
-  },
-  {
-    featureType: 'transit.station',
-    stylers: [{ visibility: 'off' }],
-  },
-]
 
 const props = defineProps<{
   pharmacies: Pharmacy[]
@@ -57,8 +46,8 @@ const mapEl = ref<HTMLElement | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 let map: google.maps.Map | null = null
-let mapsApi: typeof google | null = null
-let markers: google.maps.Marker[] = []
+let mapsApi: GoogleMapsApi | null = null
+let markers: google.maps.marker.AdvancedMarkerElement[] = []
 let markerPharmacyIds: string[] = []
 
 onMounted(async () => {
@@ -70,13 +59,13 @@ onMounted(async () => {
       center: defaultCenter(),
       clickableIcons: false,
       fullscreenControl: false,
+      mapId: config.public.googleMapsMapId,
       mapTypeControl: false,
       restriction: {
         latLngBounds: POLAND_BOUNDS,
         strictBounds: false,
       },
       streetViewControl: false,
-      styles: MAP_STYLES,
       zoom: Number(config.public.defaultMapZoom || 13),
     })
 
@@ -105,7 +94,9 @@ function defaultCenter(): google.maps.LatLngLiteral {
 function renderMarkers() {
   if (!map || !mapsApi) return
 
-  markers.forEach(marker => marker.setMap(null))
+  markers.forEach((marker) => {
+    marker.map = null
+  })
   markers = []
   markerPharmacyIds = []
 
@@ -113,14 +104,15 @@ function renderMarkers() {
     if (typeof pharmacy.cachedLat !== 'number' || typeof pharmacy.cachedLng !== 'number') return
 
     const state = getPharmacyMarkerState(pharmacy)
-    const marker = new mapsApi!.maps.Marker({
-      icon: markerIcon(state, pharmacy.id === props.selectedId),
+    const marker = new mapsApi!.marker.AdvancedMarkerElement({
+      content: markerContent(state, pharmacy.id === props.selectedId),
+      gmpClickable: true,
       map,
       position: { lat: pharmacy.cachedLat, lng: pharmacy.cachedLng },
       title: pharmacy.cachedName ?? 'Pharmacy',
     })
 
-    marker.addListener('click', () => emit('select', pharmacy))
+    marker.addEventListener('gmp-click', () => emit('select', pharmacy))
     markers.push(marker)
     markerPharmacyIds.push(pharmacy.id)
   })
@@ -136,20 +128,19 @@ function highlightSelected() {
     const marker = markers[index]
     if (!marker || !pharmacy) return
 
-    marker.setIcon(markerIcon(getPharmacyMarkerState(pharmacy), pharmacy.id === props.selectedId))
+    marker.content = markerContent(getPharmacyMarkerState(pharmacy), pharmacy.id === props.selectedId)
   })
 }
 
-function markerIcon(state: MarkerState, selected: boolean): google.maps.Symbol {
-  return {
-    path: google.maps.SymbolPath.CIRCLE,
-    fillColor: markerColor(state),
-    fillOpacity: 1,
-    scale: selected ? 13 : 10,
-    strokeColor: selected ? '#173b3a' : '#ffffff',
-    strokeOpacity: 1,
-    strokeWeight: selected ? 4 : 3,
-  }
+function markerContent(state: MarkerState, selected: boolean): HTMLElement {
+  const marker = document.createElement('span')
+  marker.className = 'block rounded-full shadow-lg shadow-teal-950/20'
+  marker.style.width = selected ? '26px' : '20px'
+  marker.style.height = selected ? '26px' : '20px'
+  marker.style.background = markerColor(state)
+  marker.style.border = `${selected ? 4 : 3}px solid ${selected ? '#173b3a' : '#ffffff'}`
+
+  return marker
 }
 
 function markerColor(state: MarkerState): string {

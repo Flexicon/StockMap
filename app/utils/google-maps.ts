@@ -1,8 +1,14 @@
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader'
 
-let mapsPromise: Promise<typeof google> | null = null
+export type GoogleMapsApi = {
+  maps: google.maps.MapsLibrary
+  marker: google.maps.MarkerLibrary
+  places: google.maps.PlacesLibrary
+}
 
-export function loadGoogleMaps(apiKey: string): Promise<typeof google> {
+let mapsPromise: Promise<GoogleMapsApi> | null = null
+
+export function loadGoogleMaps(apiKey: string): Promise<GoogleMapsApi> {
   if (!apiKey) throw new Error('Missing Google Maps browser key')
 
   if (!mapsPromise) {
@@ -13,8 +19,9 @@ export function loadGoogleMaps(apiKey: string): Promise<typeof google> {
 
     mapsPromise = Promise.all([
       importLibrary('maps'),
+      importLibrary('marker'),
       importLibrary('places'),
-    ]).then(() => google)
+    ]).then(([maps, marker, places]) => ({ maps, marker, places }))
   }
 
   return mapsPromise
