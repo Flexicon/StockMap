@@ -1,6 +1,7 @@
 .nuxt
 .output
 .wrangler
+.playwright-mcp/
 node_modules
 dist
 .env
