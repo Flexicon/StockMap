@@ -10,6 +10,8 @@
     "generate": "nuxt generate",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "migrate": "wrangler d1 migrations apply stockmap --local",
+    "migrate:prod": "wrangler d1 migrations apply stockmap --remote",
     "postinstall": "nuxt prepare",
     "preview": "nuxt preview",
     "preview:cf": "nuxt build && wrangler dev",
