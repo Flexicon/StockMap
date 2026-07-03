@@ -38,7 +38,7 @@ export default defineNuxtConfig({
           {
             binding: 'DB',
             database_name: 'stockmap',
-            database_id: 'replace-with-d1-database-id',
+            database_id: '47b504fa-02a1-4a87-9a70-4687fcf8658f',
             migrations_dir: './migrations',
           },
         ],
