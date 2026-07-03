@@ -18,6 +18,14 @@ The MVP should let users:
 
 The app is protected by Cloudflare Access. Do not add application-level auth.
 
+Design intent:
+
+- Use as little visible text as possible while keeping the app clear and accessible.
+- Favor the calm, plain, tactile product sensibility of 37signals apps such as Campfire, Fizzy, Writebook, and Basecamp.
+- Let the map, markers, colors, position, and a few obvious controls carry the interface.
+- Prefer short nouns and verbs over explanatory sentences.
+- Avoid dark hacker styling, generic SaaS density, marketing copy, and dashboard-like chrome.
+
 ## Phase 0 — Project Bootstrap
 
 Create the Nuxt project and baseline Cloudflare setup.
@@ -175,6 +183,7 @@ Tasks:
 - Add approximate Poland bounds if simple.
 - Add loading/error state for map initialization.
 - Keep the map pannable and zoomable.
+- Keep map chrome sparse; avoid explanatory page copy around the map.
 
 Approximate bounds:
 
@@ -194,6 +203,7 @@ Acceptance criteria:
 - Initial viewport is controlled by env vars.
 - User can pan and zoom.
 - Poland bounds are applied if this does not cause awkward UX or excessive code.
+- The shell feels like a map-first tool, not a dashboard or landing page.
 
 ## Phase 5 — Render Tracked Pharmacy Markers
 
@@ -230,6 +240,7 @@ Tasks:
 - Add stocked/not-stocked toggle.
 - Add delete action.
 - Use a side drawer on desktop and bottom sheet on mobile/tablet.
+- Keep drawer copy short; use compact state chips, dates, and large actions instead of helper paragraphs.
 
 Acceptance criteria:
 
@@ -238,6 +249,7 @@ Acceptance criteria:
 - Toggling stocked state updates UI and persists to D1.
 - Deleting removes the pharmacy from the map and D1.
 - Mutations have clear loading/error states.
+- The drawer is understandable at a glance with minimal visible text.
 
 ## Phase 7 — Add Pharmacy via Google Places
 
@@ -251,6 +263,7 @@ Tasks:
 - Persist new tracked pharmacy.
 - Prevent duplicate tracked pharmacies.
 - Add marker to map after successful creation.
+- Keep the add flow direct: search, choose, done.
 
 Minimum required fields from Google:
 
@@ -270,10 +283,11 @@ Acceptance criteria:
 - App stores Google Place ID and cached display fields.
 - Duplicate adds are handled cleanly.
 - Newly added pharmacy appears on the map immediately.
+- The add UI avoids verbose instructions and uses accessible labels for sparse visible copy.
 
 ## Phase 8 — UI Polish
 
-Make the app pleasant enough for family use.
+Make the app pleasant enough for family use, with minimal copy and a plain 37signals-like tactility.
 
 Tasks:
 
@@ -284,6 +298,8 @@ Tasks:
 - Add marker legend.
 - Add confirmation before delete.
 - Make map controls usable on iPhone/iPad.
+- Reduce visible text where icons, position, color, or state chips are clearer.
+- Keep empty, loading, and error states short and direct.
 
 Acceptance criteria:
 
@@ -291,6 +307,8 @@ Acceptance criteria:
 - Primary actions are one tap/click from the details panel.
 - Error states are visible but not noisy.
 - Delete requires confirmation.
+- The UI feels bright, calm, pharmacy-adjacent, and not dark/hacker-like.
+- Visible labels are sparse but accessible names remain complete.
 
 ## Phase 9 — Cloudflare Deployment Hardening
 

@@ -20,6 +20,29 @@ The app lets family members:
 
 The app tracks only pharmacies explicitly added by the user. It does not automatically import all pharmacies from the current map viewport in the MVP.
 
+## Product Design Direction
+
+Build the UI with as little actual text as possible. The app should feel direct, calm, and obvious, closer to the product sensibility of 37signals apps such as Campfire, Fizzy, Writebook, and Basecamp than a dense enterprise dashboard.
+
+Prefer:
+
+- clear spatial layout over explanatory copy
+- icons, color, position, and simple controls over long labels
+- short nouns and verbs over sentences
+- progressive disclosure over always-visible instructions
+- plain, friendly, tactile surfaces over glossy or hacker-style UI
+- obvious primary actions with minimal surrounding chrome
+
+Avoid:
+
+- marketing-style hero copy inside the app
+- verbose helper text and empty-state paragraphs
+- dashboard cards full of labels, legends, and metadata
+- clever microcopy that slows down quick family use
+- generic SaaS density, dark terminal aesthetics, or admin-console styling
+
+Text is still acceptable where it prevents ambiguity or supports accessibility, but default to the shortest clear wording. Use accessible names and ARIA labels even when visible UI text is intentionally sparse.
+
 ## Preferred Stack
 
 Use this stack unless there is a strong technical reason not to:
@@ -266,6 +289,7 @@ Main screen:
 - Search/add pharmacy control.
 - Markers for tracked pharmacies.
 - Selected pharmacy drawer/panel.
+- Minimal visible copy; map, markers, and a small number of clear controls should carry the interface.
 
 Desktop layout:
 
@@ -290,6 +314,8 @@ Selected pharmacy details should show:
 - One-click/tap “Mark visited today”.
 - One-click/tap stocked/not-stocked toggle.
 - Delete action.
+
+Keep the details panel compact. Prefer a small set of large actions, state chips, and dates over explanatory text blocks.
 
 No notes/custom labels in MVP.
 
@@ -321,6 +347,10 @@ The app is for Poland. Treat “today” according to the app/user’s local tim
 ## Styling
 
 Use Tailwind CSS.
+
+Use a bright, pharmacy-adjacent pastel palette: teal as the brand-primary color, supported by mint, sage, cream, peach, lavender, and soft neutrals. Avoid making the app feel dark, cyberpunk, or hacker-like.
+
+Keep the visual language sparse and tactile: soft panels, generous spacing, rounded controls, clear affordances, and minimal labels.
 
 Use Reka UI for accessible primitives when useful, especially for:
 
