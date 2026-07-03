@@ -4,13 +4,12 @@
       <PharmacyMap
         :pharmacies="pharmacies"
         :selected-id="selectedId"
+        @ready="map = $event"
         @select="selectPharmacy"
       />
 
       <template #fallback>
-        <div class="grid min-h-screen place-items-center bg-[var(--color-brand-cream)] font-bold text-[var(--color-ink-muted)]">
-          Map
-        </div>
+        <div class="min-h-screen bg-[var(--color-brand-cream)] font-bold text-[var(--color-ink-muted)]" />
       </template>
     </ClientOnly>
 
@@ -18,6 +17,7 @@
       <div class="pointer-events-auto">
         <AddPharmacySearch
           :create-pharmacy="create"
+          :map="map"
           @created="selectPharmacy"
           @failed="setError"
         />
@@ -65,6 +65,7 @@ const {
 } = usePharmacies()
 
 const selectedId = ref<string | null>(null)
+const map = shallowRef<google.maps.Map | null>(null)
 const selectedPharmacy = computed(() => pharmacies.value.find(pharmacy => pharmacy.id === selectedId.value) ?? null)
 
 onMounted(refresh)

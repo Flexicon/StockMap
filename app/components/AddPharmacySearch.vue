@@ -30,25 +30,28 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   createPharmacy: (input: PharmacyInput) => Promise<Pharmacy | null>
+  map: google.maps.Map | null
 }>()
 
 const config = useRuntimeConfig()
 const inputEl = ref<HTMLInputElement | null>(null)
+let autocomplete: google.maps.places.Autocomplete | null = null
 
 onMounted(async () => {
   try {
     const maps = await loadGoogleMaps(config.public.googleMapsBrowserKey)
     if (!inputEl.value) return
 
-    const autocomplete = new maps.maps.places.Autocomplete(inputEl.value, {
+    autocomplete = new maps.maps.places.Autocomplete(inputEl.value, {
       componentRestrictions: { country: 'pl' },
       fields: ['place_id', 'name', 'formatted_address', 'geometry'],
       strictBounds: false,
       types: ['establishment'],
     })
+    bindAutocompleteToMap()
 
     autocomplete.addListener('place_changed', async () => {
-      const place = autocomplete.getPlace()
+      const place = autocomplete!.getPlace()
       if (!place.place_id) return
 
       const input = await normalizePlace(place.place_id, place)
@@ -65,6 +68,14 @@ onMounted(async () => {
     emit('failed', 'Maps key needed')
   }
 })
+
+watch(() => props.map, bindAutocompleteToMap)
+
+function bindAutocompleteToMap() {
+  if (!autocomplete || !props.map) return
+
+  autocomplete.bindTo('bounds', props.map)
+}
 
 async function normalizePlace(placeId: string, place: google.maps.places.PlaceResult): Promise<PharmacyInput | null> {
   const location = placeLocation(place)

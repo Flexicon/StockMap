@@ -8,9 +8,7 @@
     <div
       v-if="loading"
       class="absolute inset-0 grid place-items-center bg-[var(--color-brand-cream)]/75 text-sm font-semibold text-[var(--color-ink-muted)]"
-    >
-      Map
-    </div>
+    />
 
     <div
       v-if="error"
@@ -50,6 +48,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  ready: [map: google.maps.Map]
   select: [pharmacy: Pharmacy]
 }>()
 
@@ -81,6 +80,7 @@ onMounted(async () => {
       zoom: Number(config.public.defaultMapZoom || 13),
     })
 
+    emit('ready', map)
     renderMarkers()
   }
   catch {
