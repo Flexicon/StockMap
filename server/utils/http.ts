@@ -1,11 +1,11 @@
-import { ZodError } from 'zod'
+import { z, ZodError } from 'zod'
 
 export function validationError(error: unknown) {
   if (error instanceof ZodError) {
     return createError({
       statusCode: 400,
       statusMessage: 'Invalid input',
-      data: error.flatten(),
+      data: z.treeifyError(error),
     })
   }
 

@@ -31,8 +31,8 @@ export const createPharmacySchema = z.object({
   googlePlaceId: z.string().min(1),
   cachedName: z.string().trim().min(1).nullable().optional(),
   cachedAddress: z.string().trim().min(1).nullable().optional(),
-  cachedLat: z.number().finite().min(-90).max(90).nullable().optional(),
-  cachedLng: z.number().finite().min(-180).max(180).nullable().optional(),
+  cachedLat: z.number().min(-90).max(90).nullable().optional(),
+  cachedLng: z.number().min(-180).max(180).nullable().optional(),
 })
 
 export const updatePharmacySchema = z.object({
