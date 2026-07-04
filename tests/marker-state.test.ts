@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { daysBetweenLocalDates, localDateString, relativeVisitAge } from '../shared/utils/date'
 import { getPharmacyMarkerState } from '../shared/utils/marker-state'
-import { isPharmacyOpenNow } from '../shared/utils/opening-hours'
+import { formatOpeningHoursRows, isPharmacyOpenNow } from '../shared/utils/opening-hours'
 
 describe('date helpers', () => {
   it('formats local calendar dates without UTC conversion', () => {
@@ -99,5 +99,42 @@ describe('isPharmacyOpenNow', () => {
         close: { day: 6, hour: 2, minute: 0 },
       }],
     }, new Date(2026, 6, 4, 1, 0))).toBe(true)
+  })
+})
+
+describe('formatOpeningHoursRows', () => {
+  it('formats structured periods as 24-hour weekday rows', () => {
+    expect(formatOpeningHoursRows([{
+      open: { day: 1, hour: 8, minute: 0 },
+      close: { day: 1, hour: 18, minute: 30 },
+    }], null)).toEqual([
+      { day: 'Mon', time: '08:00-18:30' },
+      { day: 'Tue', time: 'Closed' },
+      { day: 'Wed', time: 'Closed' },
+      { day: 'Thu', time: 'Closed' },
+      { day: 'Fri', time: 'Closed' },
+      { day: 'Sat', time: 'Closed' },
+      { day: 'Sun', time: 'Closed' },
+    ])
+  })
+
+  it('joins multiple ranges on the same day', () => {
+    expect(formatOpeningHoursRows([
+      { open: { day: 2, hour: 8, minute: 0 }, close: { day: 2, hour: 12, minute: 0 } },
+      { open: { day: 2, hour: 14, minute: 15 }, close: { day: 2, hour: 18, minute: 45 } },
+    ], null)[1]).toEqual({ day: 'Tue', time: '08:00-12:00, 14:15-18:45' })
+  })
+
+  it('formats overnight ranges using 24-hour times', () => {
+    expect(formatOpeningHoursRows([{
+      open: { day: 5, hour: 22, minute: 0 },
+      close: { day: 6, hour: 2, minute: 0 },
+    }], null)[4]).toEqual({ day: 'Fri', time: '22:00-02:00' })
+  })
+
+  it('falls back to cached Google weekday text when structured periods are missing', () => {
+    expect(formatOpeningHoursRows(null, ['Monday: 8:00 AM - 6:30 PM'])).toEqual([
+      { day: 'Mon', time: '8:00 AM - 6:30 PM' },
+    ])
   })
 })

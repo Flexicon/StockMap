@@ -67,7 +67,7 @@
 
     <div class="mt-4 border-t border-[var(--color-border)] pt-4">
       <div
-        v-if="pharmacy.cachedOpeningHoursWeekdayText?.length"
+        v-if="formattedOpeningHours.length"
         class="mb-4"
       >
         <p class="text-xs font-bold uppercase tracking-wide text-[var(--color-ink-muted)]">
@@ -164,7 +164,7 @@ import {
 } from 'reka-ui'
 import type { Pharmacy } from '~~/shared/types/pharmacy'
 import { relativeVisitAge } from '~~/shared/utils/date'
-import { isPharmacyOpenNow } from '~~/shared/utils/opening-hours'
+import { formatOpeningHoursRows, isPharmacyOpenNow } from '~~/shared/utils/opening-hours'
 
 const props = defineProps<{
   pharmacy: Pharmacy | null
@@ -188,28 +188,9 @@ const openStatus = computed(() => {
   return isOpen ? 'Open' : 'Closed'
 })
 
-const formattedOpeningHours = computed(() => props.pharmacy?.cachedOpeningHoursWeekdayText?.map(formatOpeningHoursLine) ?? [])
-
-function formatOpeningHoursLine(line: string) {
-  const separatorIndex = line.indexOf(':')
-  if (separatorIndex === -1) return { day: abbreviateWeekday(line), time: '' }
-
-  return {
-    day: abbreviateWeekday(line.slice(0, separatorIndex)),
-    time: line.slice(separatorIndex + 1).trim(),
-  }
-}
-
-function abbreviateWeekday(line: string): string {
-  return line
-    .replace(/^Monday\b/, 'Mon')
-    .replace(/^Tuesday\b/, 'Tue')
-    .replace(/^Wednesday\b/, 'Wed')
-    .replace(/^Thursday\b/, 'Thu')
-    .replace(/^Friday\b/, 'Fri')
-    .replace(/^Saturday\b/, 'Sat')
-    .replace(/^Sunday\b/, 'Sun')
-}
+const formattedOpeningHours = computed(() => props.pharmacy
+  ? formatOpeningHoursRows(props.pharmacy.cachedOpeningHoursPeriods, props.pharmacy.cachedOpeningHoursWeekdayText)
+  : [])
 
 onMounted(() => {
   window.addEventListener('keydown', closeOnEscape)
