@@ -18,6 +18,19 @@ const googlePlaceDetailsSchema = z.object({
       }).optional(),
     }).optional(),
     name: z.string().optional(),
+    opening_hours: z.object({
+      periods: z.array(z.object({
+        open: z.object({
+          day: z.number(),
+          time: z.string(),
+        }),
+        close: z.object({
+          day: z.number(),
+          time: z.string(),
+        }).optional(),
+      })).optional(),
+      weekday_text: z.array(z.string()).optional(),
+    }).optional(),
     place_id: z.string().optional(),
   }).optional(),
   status: z.string(),
@@ -25,6 +38,7 @@ const googlePlaceDetailsSchema = z.object({
 
 type GooglePlaceDetails = z.infer<typeof googlePlaceDetailsSchema>
 type GooglePlaceResult = NonNullable<GooglePlaceDetails['result']> & { place_id: string }
+type GoogleOpeningHours = NonNullable<GooglePlaceResult['opening_hours']>
 
 export default defineEventHandler(async (event) => {
   try {
@@ -33,7 +47,7 @@ export default defineEventHandler(async (event) => {
     const url = new URL('https://maps.googleapis.com/maps/api/place/details/json')
 
     url.searchParams.set('place_id', placeId)
-    url.searchParams.set('fields', 'place_id,name,formatted_address,geometry')
+    url.searchParams.set('fields', 'place_id,name,formatted_address,geometry,opening_hours')
     url.searchParams.set('key', key)
 
     const response = await fetch(url)
@@ -53,13 +67,38 @@ export default defineEventHandler(async (event) => {
 function placeInputFromDetails(body: GooglePlaceDetails): PharmacyInput {
   assertOkStatus(body)
   const result = requirePlaceResult(body)
+  const openingHours = openingHoursInput(result.opening_hours)
 
   return {
     googlePlaceId: result.place_id,
     cachedName: optionalString(result.name),
     cachedAddress: optionalString(result.formatted_address),
-    cachedLat: optionalNumber(result.geometry?.location?.lat),
-    cachedLng: optionalNumber(result.geometry?.location?.lng),
+    cachedLat: optionalNumber(locationValue(result, 'lat')),
+    cachedLng: optionalNumber(locationValue(result, 'lng')),
+    cachedOpeningHoursPeriods: openingHours.periods,
+    cachedOpeningHoursWeekdayText: openingHours.weekdayText,
+  }
+}
+
+function openingHoursInput(openingHours: GoogleOpeningHours | undefined) {
+  return {
+    periods: openingHours?.periods?.map(period => ({
+      open: openingPoint(period.open),
+      close: period.close ? openingPoint(period.close) : null,
+    })) ?? null,
+    weekdayText: openingHours?.weekday_text ?? null,
+  }
+}
+
+function locationValue(result: GooglePlaceResult, key: 'lat' | 'lng'): number | undefined {
+  return result.geometry?.location?.[key]
+}
+
+function openingPoint(point: { day: number, time: string }) {
+  return {
+    day: point.day,
+    hour: Number(point.time.slice(0, 2)),
+    minute: Number(point.time.slice(2, 4)),
   }
 }
 

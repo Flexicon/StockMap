@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { Pharmacy, PharmacyEventType, PharmacyVisit } from '../../shared/types/pharmacy'
+import type { OpeningHoursPeriod, Pharmacy, PharmacyEventType, PharmacyVisit } from '../../shared/types/pharmacy'
 import { localDateString } from '../../shared/utils/date'
 import type { D1DatabaseBinding } from './d1'
 
@@ -12,6 +12,8 @@ interface PharmacyRow {
   cached_address: string | null
   cached_lat: number | null
   cached_lng: number | null
+  cached_opening_hours_periods_json: string | null
+  cached_opening_hours_weekday_text_json: string | null
   google_details_cached_at: string | null
   google_place_id_refreshed_at: string | null
   created_at: string
@@ -33,6 +35,19 @@ export const createPharmacySchema = z.object({
   cachedAddress: z.string().trim().min(1).nullable().optional(),
   cachedLat: z.number().min(-90).max(90).nullable().optional(),
   cachedLng: z.number().min(-180).max(180).nullable().optional(),
+  cachedOpeningHoursPeriods: z.array(z.object({
+    open: z.object({
+      day: z.number().int().min(0).max(6),
+      hour: z.number().int().min(0).max(23),
+      minute: z.number().int().min(0).max(59),
+    }),
+    close: z.object({
+      day: z.number().int().min(0).max(6),
+      hour: z.number().int().min(0).max(23),
+      minute: z.number().int().min(0).max(59),
+    }).nullable(),
+  })).nullable().optional(),
+  cachedOpeningHoursWeekdayText: z.array(z.string().trim().min(1)).nullable().optional(),
 })
 
 export const updatePharmacySchema = z.object({
@@ -53,6 +68,8 @@ export function mapPharmacy(row: PharmacyRow): Pharmacy {
     cachedAddress: row.cached_address,
     cachedLat: row.cached_lat,
     cachedLng: row.cached_lng,
+    cachedOpeningHoursPeriods: parseOpeningHoursPeriods(row.cached_opening_hours_periods_json),
+    cachedOpeningHoursWeekdayText: parseStringArray(row.cached_opening_hours_weekday_text_json),
     googleDetailsCachedAt: row.google_details_cached_at,
     googlePlaceIdRefreshedAt: row.google_place_id_refreshed_at,
     createdAt: row.created_at,
@@ -133,10 +150,12 @@ export async function createPharmacy(db: D1DatabaseBinding, input: CreatePharmac
       cached_address,
       cached_lat,
       cached_lng,
+      cached_opening_hours_periods_json,
+      cached_opening_hours_weekday_text_json,
       google_details_cached_at,
       google_place_id_refreshed_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     id,
     input.googlePlaceId,
@@ -144,6 +163,8 @@ export async function createPharmacy(db: D1DatabaseBinding, input: CreatePharmac
     nullable(input.cachedAddress),
     nullable(input.cachedLat),
     nullable(input.cachedLng),
+    nullableJson(input.cachedOpeningHoursPeriods),
+    nullableJson(input.cachedOpeningHoursWeekdayText),
     now,
     now,
     now,
@@ -222,6 +243,43 @@ function nullable<T>(value: T | null | undefined): T | null {
   if (value === undefined) return null
 
   return value
+}
+
+function nullableJson(value: unknown[] | null | undefined): string | null {
+  if (value === undefined || value === null) return null
+
+  return JSON.stringify(value)
+}
+
+function parseOpeningHoursPeriods(value: string | null): OpeningHoursPeriod[] | null {
+  if (!value) return null
+
+  const json = parseJson(value)
+  if (!json) return null
+
+  const parsed = createPharmacySchema.shape.cachedOpeningHoursPeriods.safeParse(json)
+
+  return parsed.success ? parsed.data ?? null : null
+}
+
+function parseStringArray(value: string | null): string[] | null {
+  if (!value) return null
+
+  const json = parseJson(value)
+  if (!json) return null
+
+  const parsed = createPharmacySchema.shape.cachedOpeningHoursWeekdayText.safeParse(json)
+
+  return parsed.success ? parsed.data ?? null : null
+}
+
+function parseJson(value: string): unknown {
+  try {
+    return JSON.parse(value)
+  }
+  catch {
+    return null
+  }
 }
 
 function stockedFlag(value: boolean): number {

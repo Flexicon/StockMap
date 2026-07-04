@@ -9,6 +9,24 @@ describe('pharmacy validation', () => {
     })
   })
 
+  it('accepts cached Google opening hours', () => {
+    expect(createPharmacySchema.parse({
+      googlePlaceId: 'place-123',
+      cachedOpeningHoursPeriods: [{
+        open: { day: 1, hour: 8, minute: 0 },
+        close: { day: 1, hour: 18, minute: 30 },
+      }],
+      cachedOpeningHoursWeekdayText: ['Monday: 8:00 AM - 6:30 PM'],
+    })).toEqual({
+      googlePlaceId: 'place-123',
+      cachedOpeningHoursPeriods: [{
+        open: { day: 1, hour: 8, minute: 0 },
+        close: { day: 1, hour: 18, minute: 30 },
+      }],
+      cachedOpeningHoursWeekdayText: ['Monday: 8:00 AM - 6:30 PM'],
+    })
+  })
+
   it('rejects blank display strings after trimming', () => {
     expect(() => createPharmacySchema.parse({
       googlePlaceId: 'place-123',
@@ -48,6 +66,8 @@ describe('mapPharmacy', () => {
       cached_address: 'Rynek 1',
       cached_lat: 50.0614,
       cached_lng: 19.9366,
+      cached_opening_hours_periods_json: JSON.stringify([{ open: { day: 1, hour: 8, minute: 0 }, close: { day: 1, hour: 18, minute: 30 } }]),
+      cached_opening_hours_weekday_text_json: JSON.stringify(['Monday: 8:00 AM - 6:30 PM']),
       google_details_cached_at: '2026-07-03T10:00:00.000Z',
       google_place_id_refreshed_at: '2026-07-03T10:00:00.000Z',
       created_at: '2026-07-01T10:00:00.000Z',
@@ -61,6 +81,8 @@ describe('mapPharmacy', () => {
       cachedAddress: 'Rynek 1',
       cachedLat: 50.0614,
       cachedLng: 19.9366,
+      cachedOpeningHoursPeriods: [{ open: { day: 1, hour: 8, minute: 0 }, close: { day: 1, hour: 18, minute: 30 } }],
+      cachedOpeningHoursWeekdayText: ['Monday: 8:00 AM - 6:30 PM'],
       googleDetailsCachedAt: '2026-07-03T10:00:00.000Z',
       googlePlaceIdRefreshedAt: '2026-07-03T10:00:00.000Z',
       createdAt: '2026-07-01T10:00:00.000Z',

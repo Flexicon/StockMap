@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Pharmacy, PharmacyInput } from '~~/shared/types/pharmacy'
+import type { OpeningHoursPeriod, OpeningHoursPoint, Pharmacy, PharmacyInput } from '~~/shared/types/pharmacy'
 import { loadGoogleMaps } from '../utils/google-maps'
 
 const emit = defineEmits<{
@@ -47,7 +47,7 @@ onMounted(async () => {
 
     autocomplete.addEventListener('gmp-select', async (event) => {
       const place = (event as google.maps.places.PlacePredictionSelectEvent).placePrediction.toPlace()
-      await place.fetchFields({ fields: ['id', 'displayName', 'formattedAddress', 'location'] })
+      await place.fetchFields({ fields: ['id', 'displayName', 'formattedAddress', 'location', 'regularOpeningHours'] })
       if (!place.id) return
 
       const input = await normalizePlace(place)
@@ -91,13 +91,16 @@ function bindAutocompleteToMap() {
 async function normalizePlace(place: google.maps.places.Place): Promise<PharmacyInput | null> {
   const location = placeLocation(place)
   if (!location) return fetchPlaceInput(place.id)
+  const openingHours = openingHoursInput(place.regularOpeningHours)
 
   return {
     googlePlaceId: place.id,
-    cachedName: optionalString(place.displayName ?? undefined),
-    cachedAddress: optionalString(place.formattedAddress ?? undefined),
+    cachedName: optionalString(place.displayName),
+    cachedAddress: optionalString(place.formattedAddress),
     cachedLat: location.lat(),
     cachedLng: location.lng(),
+    cachedOpeningHoursPeriods: openingHours.periods,
+    cachedOpeningHoursWeekdayText: openingHours.weekdayText,
   }
 }
 
@@ -121,10 +124,34 @@ function placeLocation(place: google.maps.places.Place): google.maps.LatLng | nu
   return place.location
 }
 
-function optionalString(value: string | undefined): string | null {
-  if (value === undefined) return null
+function optionalString(value: string | null | undefined): string | null {
+  if (value === undefined || value === null) return null
 
   return value
+}
+
+function openingHoursInput(openingHours: google.maps.places.OpeningHours | null | undefined) {
+  return {
+    periods: openingHoursPeriods(openingHours),
+    weekdayText: openingHours?.weekdayDescriptions ?? null,
+  }
+}
+
+function openingHoursPeriods(openingHours: google.maps.places.OpeningHours | null | undefined): OpeningHoursPeriod[] | null {
+  if (!openingHours?.periods.length) return null
+
+  return openingHours.periods.map(period => ({
+    open: openingHoursPoint(period.open),
+    close: period.close ? openingHoursPoint(period.close) : null,
+  }))
+}
+
+function openingHoursPoint(point: google.maps.places.OpeningHoursPoint): OpeningHoursPoint {
+  return {
+    day: point.day,
+    hour: point.hour,
+    minute: point.minute,
+  }
 }
 </script>
 

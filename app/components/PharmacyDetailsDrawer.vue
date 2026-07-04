@@ -37,6 +37,13 @@
       <span class="rounded-full bg-[var(--color-brand-cream)] px-3 py-1.5 text-sm font-bold text-[var(--color-ink-muted)]">
         {{ relativeVisitAge(pharmacy.lastVisitedOn) }}
       </span>
+      <span
+        v-if="openStatus"
+        class="rounded-full px-3 py-1.5 text-sm font-bold"
+        :class="openStatus === 'Open' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'"
+      >
+        {{ openStatus }}
+      </span>
     </div>
 
     <div class="mt-5 grid grid-cols-2 gap-3">
@@ -59,6 +66,30 @@
     </div>
 
     <div class="mt-4 border-t border-[var(--color-border)] pt-4">
+      <div
+        v-if="pharmacy.cachedOpeningHoursWeekdayText?.length"
+        class="mb-4"
+      >
+        <p class="text-xs font-bold uppercase tracking-wide text-[var(--color-ink-muted)]">
+          Hours
+        </p>
+        <table class="mt-2 w-full text-left text-sm font-semibold text-[var(--color-ink)]">
+          <tbody>
+            <tr
+              v-for="line in formattedOpeningHours"
+              :key="line.day + line.time"
+            >
+              <th class="w-12 py-0.5 pr-3 align-top font-bold text-[var(--color-ink-muted)]">
+                {{ line.day }}
+              </th>
+              <td class="py-0.5 align-top">
+                {{ line.time }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <div class="flex items-start justify-between gap-3">
         <div>
           <p class="text-xs font-bold uppercase tracking-wide text-[var(--color-ink-muted)]">
@@ -133,6 +164,7 @@ import {
 } from 'reka-ui'
 import type { Pharmacy } from '~~/shared/types/pharmacy'
 import { relativeVisitAge } from '~~/shared/utils/date'
+import { isPharmacyOpenNow } from '~~/shared/utils/opening-hours'
 
 const props = defineProps<{
   pharmacy: Pharmacy | null
@@ -145,6 +177,39 @@ const emit = defineEmits<{
   toggle: [pharmacy: Pharmacy]
   delete: [pharmacy: Pharmacy]
 }>()
+
+const openStatus = computed(() => {
+  if (!props.pharmacy) return null
+
+  const isOpen = isPharmacyOpenNow(props.pharmacy)
+
+  if (isOpen === null) return null
+
+  return isOpen ? 'Open' : 'Closed'
+})
+
+const formattedOpeningHours = computed(() => props.pharmacy?.cachedOpeningHoursWeekdayText?.map(formatOpeningHoursLine) ?? [])
+
+function formatOpeningHoursLine(line: string) {
+  const separatorIndex = line.indexOf(':')
+  if (separatorIndex === -1) return { day: abbreviateWeekday(line), time: '' }
+
+  return {
+    day: abbreviateWeekday(line.slice(0, separatorIndex)),
+    time: line.slice(separatorIndex + 1).trim(),
+  }
+}
+
+function abbreviateWeekday(line: string): string {
+  return line
+    .replace(/^Monday\b/, 'Mon')
+    .replace(/^Tuesday\b/, 'Tue')
+    .replace(/^Wednesday\b/, 'Wed')
+    .replace(/^Thursday\b/, 'Thu')
+    .replace(/^Friday\b/, 'Fri')
+    .replace(/^Saturday\b/, 'Sat')
+    .replace(/^Sunday\b/, 'Sun')
+}
 
 onMounted(() => {
   window.addEventListener('keydown', closeOnEscape)

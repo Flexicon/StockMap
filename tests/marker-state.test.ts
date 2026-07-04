@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { daysBetweenLocalDates, localDateString, relativeVisitAge } from '../shared/utils/date'
 import { getPharmacyMarkerState } from '../shared/utils/marker-state'
+import { isPharmacyOpenNow } from '../shared/utils/opening-hours'
 
 describe('date helpers', () => {
   it('formats local calendar dates without UTC conversion', () => {
@@ -31,13 +32,26 @@ describe('date helpers', () => {
 
 describe('getPharmacyMarkerState', () => {
   const today = '2026-07-03'
+  const openNow = new Date(2026, 6, 3, 10, 0)
+  const closedPeriods = [{
+    open: { day: 5, hour: 8, minute: 0 },
+    close: { day: 5, hour: 9, minute: 0 },
+  }]
 
   it('uses not-stocked before visit recency', () => {
-    expect(getPharmacyMarkerState({ isStocked: false, lastVisitedOn: today }, today)).toBe('not-stocked')
+    expect(getPharmacyMarkerState({ cachedOpeningHoursPeriods: null, isStocked: false, lastVisitedOn: today }, today)).toBe('not-stocked')
   })
 
   it('uses default when stocked and never visited', () => {
-    expect(getPharmacyMarkerState({ isStocked: true, lastVisitedOn: null }, today)).toBe('default')
+    expect(getPharmacyMarkerState({ cachedOpeningHoursPeriods: null, isStocked: true, lastVisitedOn: null }, today)).toBe('default')
+  })
+
+  it('uses closed before visit recency when hours say the pharmacy is closed', () => {
+    expect(getPharmacyMarkerState({ cachedOpeningHoursPeriods: closedPeriods, isStocked: true, lastVisitedOn: today }, today, openNow)).toBe('closed')
+  })
+
+  it('keeps closed not-stocked pharmacies grey', () => {
+    expect(getPharmacyMarkerState({ cachedOpeningHoursPeriods: closedPeriods, isStocked: false, lastVisitedOn: today }, today, openNow)).toBe('not-stocked-closed')
   })
 
   it.each([
@@ -51,6 +65,39 @@ describe('getPharmacyMarkerState', () => {
     ['2026-05-27', 'visited-stale'],
     ['2026-05-26', 'default'],
   ])('maps visit date %s to %s', (lastVisitedOn, markerState) => {
-    expect(getPharmacyMarkerState({ isStocked: true, lastVisitedOn }, today)).toBe(markerState)
+    expect(getPharmacyMarkerState({ cachedOpeningHoursPeriods: null, isStocked: true, lastVisitedOn }, today)).toBe(markerState)
+  })
+})
+
+describe('isPharmacyOpenNow', () => {
+  it('returns null when no cached hours exist', () => {
+    expect(isPharmacyOpenNow({ cachedOpeningHoursPeriods: null })).toBeNull()
+  })
+
+  it('detects an open same-day period', () => {
+    expect(isPharmacyOpenNow({
+      cachedOpeningHoursPeriods: [{
+        open: { day: 5, hour: 8, minute: 0 },
+        close: { day: 5, hour: 18, minute: 0 },
+      }],
+    }, new Date(2026, 6, 3, 10, 0))).toBe(true)
+  })
+
+  it('detects a closed same-day period', () => {
+    expect(isPharmacyOpenNow({
+      cachedOpeningHoursPeriods: [{
+        open: { day: 5, hour: 8, minute: 0 },
+        close: { day: 5, hour: 18, minute: 0 },
+      }],
+    }, new Date(2026, 6, 3, 19, 0))).toBe(false)
+  })
+
+  it('detects an overnight period crossing midnight', () => {
+    expect(isPharmacyOpenNow({
+      cachedOpeningHoursPeriods: [{
+        open: { day: 5, hour: 22, minute: 0 },
+        close: { day: 6, hour: 2, minute: 0 },
+      }],
+    }, new Date(2026, 6, 4, 1, 0))).toBe(true)
   })
 })

@@ -1,10 +1,16 @@
 import type { MarkerState, Pharmacy } from '../types/pharmacy'
 import { daysBetweenLocalDates, localDateString } from './date'
+import { isPharmacyOpenNow } from './opening-hours'
 
 export function getPharmacyMarkerState(
-  pharmacy: Pick<Pharmacy, 'isStocked' | 'lastVisitedOn'>,
+  pharmacy: Pick<Pharmacy, 'cachedOpeningHoursPeriods' | 'isStocked' | 'lastVisitedOn'>,
   today = localDateString(),
+  now = new Date(),
 ): MarkerState {
+  const isOpen = isPharmacyOpenNow(pharmacy, now)
+
+  if (isOpen === false && !pharmacy.isStocked) return 'not-stocked-closed'
+  if (isOpen === false) return 'closed'
   if (!pharmacy.isStocked) return 'not-stocked'
   if (!pharmacy.lastVisitedOn) return 'default'
 
