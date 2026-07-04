@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { fetchGooglePlaceInput } from '../server/utils/google-places'
 import { isDuplicatePlaceError } from '../server/utils/http'
 import { createPharmacySchema, mapPharmacy, updatePharmacySchema } from '../server/utils/pharmacies'
 
@@ -102,5 +103,46 @@ describe('duplicate place detection', () => {
 
   it('ignores unrelated errors', () => {
     expect(isDuplicatePlaceError(new Error('network failed'))).toBe(false)
+  })
+})
+
+describe('fetchGooglePlaceInput', () => {
+  it('requests and maps Google opening hours cache fields', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        result: {
+          place_id: 'place-123',
+          name: 'Apteka',
+          formatted_address: 'Rynek 1',
+          geometry: { location: { lat: 50.0614, lng: 19.9366 } },
+          opening_hours: {
+            periods: [{
+              open: { day: 1, time: '0800' },
+              close: { day: 1, time: '1830' },
+            }],
+            weekday_text: ['Monday: 8:00 AM - 6:30 PM'],
+          },
+        },
+      }),
+    } as Response))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchGooglePlaceInput('place-123', 'server-key')).resolves.toEqual({
+      googlePlaceId: 'place-123',
+      cachedName: 'Apteka',
+      cachedAddress: 'Rynek 1',
+      cachedLat: 50.0614,
+      cachedLng: 19.9366,
+      cachedOpeningHoursPeriods: [{
+        open: { day: 1, hour: 8, minute: 0 },
+        close: { day: 1, hour: 18, minute: 30 },
+      }],
+      cachedOpeningHoursWeekdayText: ['Monday: 8:00 AM - 6:30 PM'],
+    })
+
+    const url = new URL(fetchMock.mock.calls[0]![0] as string)
+    expect(url.searchParams.get('fields')).toBe('place_id,name,formatted_address,geometry,opening_hours')
   })
 })

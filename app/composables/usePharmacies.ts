@@ -101,6 +101,24 @@ export function usePharmacies() {
     }
   }
 
+  async function refreshDetails(pharmacy: Pharmacy) {
+    mutatingId.value = pharmacy.id
+    error.value = null
+
+    try {
+      const response = await $fetch<PharmacyResponse>(`/api/pharmacies/${pharmacy.id}/refresh-details`, { method: 'POST' })
+      replacePharmacy(response.pharmacy)
+      return response.pharmacy
+    }
+    catch {
+      error.value = 'Could not refresh'
+      return null
+    }
+    finally {
+      mutatingId.value = null
+    }
+  }
+
   async function remove(pharmacy: Pharmacy) {
     const previous = pharmacies.value
     mutatingId.value = pharmacy.id
@@ -134,6 +152,7 @@ export function usePharmacies() {
     create,
     visitToday,
     toggleStocked,
+    refreshDetails,
     remove,
   }
 }

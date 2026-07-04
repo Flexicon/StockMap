@@ -45,6 +45,7 @@
       :pharmacy="selectedPharmacy"
       @close="selectedId = null"
       @delete="deleteSelected"
+      @refresh="refreshSelected"
       @toggle="toggleSelected"
       @visit="visitSelected"
     />
@@ -63,6 +64,7 @@ const {
   create,
   visitToday,
   toggleStocked,
+  refreshDetails,
   remove,
 } = usePharmacies()
 
@@ -87,6 +89,11 @@ async function visitSelected(pharmacy: Pharmacy) {
 
 async function toggleSelected(pharmacy: Pharmacy) {
   const updated = await toggleStocked(pharmacy)
+  if (updated) selectedId.value = updated.id
+}
+
+async function refreshSelected(pharmacy: Pharmacy) {
+  const updated = await refreshDetails(pharmacy)
   if (updated) selectedId.value = updated.id
 }
 

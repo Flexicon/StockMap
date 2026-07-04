@@ -194,6 +194,41 @@ export async function updatePharmacy(db: D1DatabaseBinding, id: string, input: U
   return getPharmacyById(db, id)
 }
 
+export async function updatePharmacyGoogleCache(db: D1DatabaseBinding, id: string, input: CreatePharmacyInput): Promise<Pharmacy | null> {
+  const current = await getPharmacyById(db, id)
+  if (!current) return null
+
+  const now = new Date().toISOString()
+
+  await db.prepare(`
+    UPDATE pharmacies
+    SET
+      cached_name = ?,
+      cached_address = ?,
+      cached_lat = ?,
+      cached_lng = ?,
+      cached_opening_hours_periods_json = ?,
+      cached_opening_hours_weekday_text_json = ?,
+      google_details_cached_at = ?,
+      google_place_id_refreshed_at = ?,
+      updated_at = ?
+    WHERE id = ?
+  `).bind(
+    nullable(input.cachedName),
+    nullable(input.cachedAddress),
+    nullable(input.cachedLat),
+    nullable(input.cachedLng),
+    nullableJson(input.cachedOpeningHoursPeriods),
+    nullableJson(input.cachedOpeningHoursWeekdayText),
+    now,
+    now,
+    now,
+    id,
+  ).run()
+
+  return getPharmacyById(db, id)
+}
+
 export async function deletePharmacy(db: D1DatabaseBinding, id: string): Promise<boolean> {
   const existing = await getPharmacyById(db, id)
   if (!existing) return false

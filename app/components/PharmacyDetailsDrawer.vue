@@ -66,14 +66,24 @@
     </div>
 
     <div class="mt-4 border-t border-[var(--color-border)] pt-4">
-      <div
-        v-if="formattedOpeningHours.length"
-        class="mb-4"
-      >
-        <p class="text-xs font-bold uppercase tracking-wide text-[var(--color-ink-muted)]">
-          Hours
-        </p>
-        <table class="mt-2 w-full text-left text-sm font-semibold text-[var(--color-ink)]">
+      <div class="mb-4">
+        <div class="flex items-center justify-between gap-3">
+          <p class="text-xs font-bold uppercase tracking-wide text-[var(--color-ink-muted)]">
+            Hours
+          </p>
+          <button
+            class="rounded-full bg-[var(--color-surface-muted)] px-3 py-1.5 text-xs font-bold text-[var(--color-ink-muted)] transition hover:text-[var(--color-ink)] disabled:opacity-60"
+            type="button"
+            :disabled="busy"
+            @click="$emit('refresh', pharmacy)"
+          >
+            Refresh
+          </button>
+        </div>
+        <table
+          v-if="formattedOpeningHours.length"
+          class="mt-2 w-full text-left text-sm font-semibold text-[var(--color-ink)]"
+        >
           <tbody>
             <tr
               v-for="line in formattedOpeningHours"
@@ -88,6 +98,12 @@
             </tr>
           </tbody>
         </table>
+        <p
+          v-else
+          class="mt-2 text-sm font-semibold text-[var(--color-ink-muted)]"
+        >
+          No hours
+        </p>
       </div>
 
       <div class="flex items-start justify-between gap-3">
@@ -175,6 +191,7 @@ const emit = defineEmits<{
   close: []
   visit: [pharmacy: Pharmacy]
   toggle: [pharmacy: Pharmacy]
+  refresh: [pharmacy: Pharmacy]
   delete: [pharmacy: Pharmacy]
 }>()
 
