@@ -146,6 +146,20 @@ const emit = defineEmits<{
   delete: [pharmacy: Pharmacy]
 }>()
 
+onMounted(() => {
+  window.addEventListener('keydown', closeOnEscape)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', closeOnEscape)
+})
+
+function closeOnEscape(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || !props.pharmacy) return
+
+  emit('close')
+}
+
 function deleteNow() {
   if (!props.pharmacy) return
   emit('delete', props.pharmacy)

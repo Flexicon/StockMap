@@ -18,8 +18,10 @@
         <AddPharmacySearch
           :create-pharmacy="create"
           :map="map"
+          :pharmacies="pharmacies"
           @created="selectPharmacy"
           @failed="setError"
+          @selected="selectPharmacy"
         />
       </div>
     </div>

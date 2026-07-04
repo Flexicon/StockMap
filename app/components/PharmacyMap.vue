@@ -82,7 +82,10 @@ onMounted(async () => {
 })
 
 watch(() => props.pharmacies, renderMarkers, { deep: true })
-watch(() => props.selectedId, highlightSelected)
+watch(() => props.selectedId, () => {
+  highlightSelected()
+  panToSelected()
+})
 
 function defaultCenter(): google.maps.LatLngLiteral {
   return {
@@ -130,6 +133,15 @@ function highlightSelected() {
 
     marker.content = markerContent(getPharmacyMarkerState(pharmacy), pharmacy.id === props.selectedId)
   })
+}
+
+function panToSelected() {
+  if (!map || !props.selectedId) return
+
+  const pharmacy = props.pharmacies.find(item => item.id === props.selectedId)
+  if (!pharmacy || typeof pharmacy.cachedLat !== 'number' || typeof pharmacy.cachedLng !== 'number') return
+
+  map.panTo({ lat: pharmacy.cachedLat, lng: pharmacy.cachedLng })
 }
 
 function markerContent(state: MarkerState, selected: boolean): HTMLElement {

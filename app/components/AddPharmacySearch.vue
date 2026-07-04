@@ -14,11 +14,13 @@ import { loadGoogleMaps } from '../utils/google-maps'
 const emit = defineEmits<{
   created: [pharmacy: Pharmacy]
   failed: [message: string]
+  selected: [pharmacy: Pharmacy]
 }>()
 
 const props = defineProps<{
   createPharmacy: (input: PharmacyInput) => Promise<Pharmacy | null>
   map: google.maps.Map | null
+  pharmacies: Pharmacy[]
 }>()
 
 const config = useRuntimeConfig()
@@ -50,6 +52,13 @@ onMounted(async () => {
 
       const input = await normalizePlace(place)
       if (!input) return
+
+      const existing = props.pharmacies.find(pharmacy => pharmacy.googlePlaceId === input.googlePlaceId)
+      if (existing) {
+        autocomplete!.value = ''
+        emit('selected', existing)
+        return
+      }
 
       const pharmacy = await props.createPharmacy(input)
       if (!pharmacy) return
