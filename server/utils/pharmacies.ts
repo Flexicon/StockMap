@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import type { Pharmacy, PharmacyEventType, PharmacyVisit } from '~~/shared/types/pharmacy'
-import { localDateString } from '~~/shared/utils/date'
+import type { Pharmacy, PharmacyEventType, PharmacyVisit } from '../../shared/types/pharmacy'
+import { localDateString } from '../../shared/utils/date'
 import type { D1DatabaseBinding } from './d1'
 
 interface PharmacyRow {
