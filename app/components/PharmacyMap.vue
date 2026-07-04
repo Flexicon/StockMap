@@ -158,9 +158,8 @@ function markerContent(state: MarkerState, selected: boolean): HTMLElement {
 function markerColor(state: MarkerState): string {
   const colors: Record<MarkerState, string> = {
     'default': '#5ecfc3',
-    'closed': '#d94f45',
+    'closed': '#8f9696',
     'not-stocked': '#a6adad',
-    'not-stocked-closed': '#8f9696',
     'visited-hot': '#d94f45',
     'visited-warm': '#f47a45',
     'visited-aging': '#d8c94a',

@@ -9,7 +9,6 @@ export function getPharmacyMarkerState(
 ): MarkerState {
   const isOpen = isPharmacyOpenNow(pharmacy, now)
 
-  if (isOpen === false && !pharmacy.isStocked) return 'not-stocked-closed'
   if (isOpen === false) return 'closed'
   if (!pharmacy.isStocked) return 'not-stocked'
   if (!pharmacy.lastVisitedOn) return 'default'

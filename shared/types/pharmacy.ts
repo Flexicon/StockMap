@@ -49,7 +49,6 @@ export type MarkerState
   = | 'default'
     | 'closed'
     | 'not-stocked'
-    | 'not-stocked-closed'
     | 'visited-hot'
     | 'visited-warm'
     | 'visited-aging'

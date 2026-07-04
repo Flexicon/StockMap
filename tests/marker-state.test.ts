@@ -51,7 +51,7 @@ describe('getPharmacyMarkerState', () => {
   })
 
   it('keeps closed not-stocked pharmacies grey', () => {
-    expect(getPharmacyMarkerState({ cachedOpeningHoursPeriods: closedPeriods, isStocked: false, lastVisitedOn: today }, today, openNow)).toBe('not-stocked-closed')
+    expect(getPharmacyMarkerState({ cachedOpeningHoursPeriods: closedPeriods, isStocked: false, lastVisitedOn: today }, today, openNow)).toBe('closed')
   })
 
   it.each([
