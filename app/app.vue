@@ -13,7 +13,7 @@
       </template>
     </ClientOnly>
 
-    <div class="pointer-events-none fixed inset-x-3 top-3 z-20 flex flex-col gap-3 sm:left-4 sm:right-auto sm:top-4">
+    <div class="safe-top-search pointer-events-none fixed inset-x-3 z-20 flex flex-col gap-3 sm:left-4 sm:right-auto">
       <div class="pointer-events-auto">
         <AddPharmacySearch
           :create-pharmacy="create"
@@ -28,7 +28,7 @@
 
     <div
       v-if="loading"
-      class="fixed bottom-5 left-1/2 z-20 -translate-x-1/2 rounded-full bg-[var(--color-surface)] px-4 py-2 text-sm font-bold text-[var(--color-ink-muted)] shadow-lg"
+      class="safe-bottom-loading fixed left-1/2 z-20 -translate-x-1/2 rounded-full bg-[var(--color-surface)] px-4 py-2 text-sm font-bold text-[var(--color-ink-muted)] shadow-lg"
     >
       Loading
     </div>

@@ -1,7 +1,7 @@
 <template>
   <aside
     v-if="pharmacy"
-    class="fixed inset-x-3 bottom-3 z-30 rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-surface)]/95 p-4 shadow-2xl shadow-teal-950/15 backdrop-blur md:inset-x-auto md:bottom-4 md:right-4 md:top-4 md:w-96 md:p-5"
+    class="safe-bottom-drawer fixed inset-x-3 z-30 rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-surface)]/95 p-4 shadow-2xl shadow-teal-950/15 backdrop-blur md:inset-x-auto md:right-4 md:top-4 md:w-96 md:p-5"
     aria-label="Pharmacy details"
   >
     <div class="flex items-start justify-between gap-4">
