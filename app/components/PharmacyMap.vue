@@ -1,8 +1,8 @@
 <template>
-  <div class="relative h-full min-h-screen w-full overflow-hidden bg-[var(--color-brand-mint)]">
+  <div class="relative h-full w-full overflow-hidden bg-[var(--color-brand-mint)]">
     <div
       ref="mapEl"
-      class="h-full min-h-screen w-full"
+      class="h-full w-full"
     />
 
     <div

@@ -1,5 +1,5 @@
 <template>
-  <main class="relative min-h-screen overflow-hidden text-[var(--color-ink)]">
+  <main class="app-shell relative overflow-hidden text-[var(--color-ink)]">
     <ClientOnly>
       <PharmacyMap
         :pharmacies="pharmacies"
@@ -9,7 +9,7 @@
       />
 
       <template #fallback>
-        <div class="min-h-screen bg-[var(--color-brand-cream)] font-bold text-[var(--color-ink-muted)]" />
+        <div class="h-full bg-[var(--color-brand-cream)] font-bold text-[var(--color-ink-muted)]" />
       </template>
     </ClientOnly>
 

@@ -23,10 +23,23 @@
     min-width: 320px;
     background: var(--color-brand-cream);
     color: var(--color-ink);
+    overscroll-behavior: none;
+  }
+
+  html,
+  body,
+  #__nuxt {
+    height: 100%;
+    overflow: hidden;
   }
 }
 
 @layer utilities {
+  .app-shell {
+    height: 100vh;
+    height: 100dvh;
+  }
+
   .safe-top-search {
     top: calc(0.75rem + env(safe-area-inset-top));
   }
